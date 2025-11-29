@@ -3,3 +3,6 @@
  Решаемые задачи: Классификация текста, Поиск похожих документов
 
 Используемая модель: deeppavlov topics_distilbert_base_uncased
+
+
+Датасет: https://www.kaggle.com/datasets/shivanandmn/multilabel-classification-dataset?resource=download&select=train.csv
