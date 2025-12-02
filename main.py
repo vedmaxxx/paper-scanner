@@ -1,48 +1,60 @@
-# 
-# import os
-
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # Использовать первую GPU
-
-# from deeppavlov import build_model, configs
-# from deeppavlov.core.commands.utils import parse_config
-# import numpy as np
-
-# from train import train
-# from utils import load_texts_from_txt
-
+import torch
 from deeppavlov import train_model
+import gc
 from deeppavlov.core.commands.utils import parse_config
 
-config = parse_config('config.json')
-# config['dataset_reader']['data_path'] = './dataset'
-config['dataset_reader']['data_path'] = './dataset/formatted/'
-model = train_model(config)
+def cleanup_gpu():
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+    print("GPU память очищена")
 
-# НУЖНО ПОМЕНЯТЬ ПУТЬ К КОНФИГУ ДАТАСЕТА
-# https://docs.deeppavlov.ai/en/master/features/models/classification.html#6.-Train-the-model-on-your-data
-# config = configs.classifiers.topics_distilbert_base_uncased
-# print(parse_config("topics_distilbert_base_uncased")["dataset_reader"]["data_path"])
+def train_with_gpu(config_path, data_path):
+    """Обучает модель с автоматической настройкой GPU"""
+    
+    config = parse_config(config_path)
+    config['dataset_reader']['data_path'] = data_path
+    
+    if torch.cuda.is_available():
+        device_id = 0
+        
+        # Автоматическая настройка batch_size
+        total_memory = torch.cuda.get_device_properties(device_id).total_memory / 1e9
+        print(f"GPU память: {total_memory:.2f} GB")
+        
+        if total_memory >= 24:
+            batch_size = 64
+        elif total_memory >= 12:
+            batch_size = 32
+        elif total_memory >= 8:
+            batch_size = 16
+        elif total_memory >= 4:
+            batch_size = 8
+        else:
+            batch_size = 4
+        
+        config['train']['batch_size'] = batch_size
+        config['chainer']['pipe'][3]['device'] = f'cuda:{device_id}'
+        
+        print(f"Используем GPU {device_id}: {torch.cuda.get_device_name(device_id)}")
+        print(f"Batch size: {batch_size}")
+        cleanup_gpu()
+        # Используем mixed precision для ускорения
+        try:
+            from torch.cuda.amp import autocast, GradScaler
+            config['chainer']['pipe'][3]['fp16'] = True
+            print("Используем mixed precision (fp16)")
+        except:
+            print("Mixed precision не доступен, используем fp32")
 
+    else:
+        print("CUDA не доступна, используем CPU")
+        config['train']['batch_size'] = 8
+        config['chainer']['pipe'][3]['device'] = 'cpu'
+    
+    # Обучаем
+    return train_model(config)
 
-# # model = build_model(config, download=False, install=False)
-
-# train()
-
-# Чтение текстов из TXT-файла(ов)
-# Можно передать один файл:
-# txt_file = "medicine-abstract.txt"
-# texts = load_texts_from_txt(txt_file)
-
-# Или список файлов:
-# txt_files = [
-#     "medicine-abstract.txt",
-#     "science-and-technology.txt",
-# ]
-# texts = load_texts_from_txt(txt_files)
-
-
-# predictions = model(texts)
-# print(predictions)
-
-# print("probabilites ", predictions[0])
-# print("labels ", predictions[1])
+# Использование
+model = train_with_gpu('config.json', './dataset/formatted/')
