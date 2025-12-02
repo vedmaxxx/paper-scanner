@@ -1,12 +1,12 @@
 {
   "dataset_reader": {
-    "class_name": "multi_label_classification_reader",
-    "x": "ABSTRACT",
-    "y": ["Computer Science", "Physics", "Mathematics", "Statistics", "Quantitative Biology", "Quantitative Finance"],
-    "data_path": "{DOWNLOADS_PATH}/your_dataset/",
+    "class_name": "basic_classification_reader",
+    "class_sep": ",",
+    "x": "text",
+    "y": "label",
+    "data_path": "./dataset/formatted/",
     "train": "train.csv",
-    "valid": "valid.csv",
-    "sep": ","
+    "valid": "valid.csv"
   },
   "dataset_iterator": {
     "class_name": "basic_classification_iterator",
@@ -106,18 +106,11 @@
     ]
   },
   "train": {
-    "epochs": 50,
-    "batch_size": 16,
+    "epochs": 20,
+    "batch_size": 8,
     "metrics": [
       {
         "name": "f1_macro",
-        "inputs": [
-          "y_onehot",
-          "y_pred_onehot"
-        ]
-      },
-      {
-        "name": "f1_weighted",
         "inputs": [
           "y_onehot",
           "y_pred_onehot"
@@ -129,39 +122,17 @@
           "y",
           "y_pred_labels"
         ]
-      },
-      {
-        "name": "roc_auc",
-        "inputs": [
-          "y_onehot",
-          "y_pred_probas"
-        ]
-      },
-      {
-        "name": "precision_macro",
-        "inputs": [
-          "y_onehot",
-          "y_pred_onehot"
-        ]
-      },
-      {
-        "name": "recall_macro",
-        "inputs": [
-          "y_onehot",
-          "y_pred_onehot"
-        ]
       }
     ],
-    "validation_patience": 10,
+    "validation_patience": 5,
     "val_every_n_epochs": 1,
     "log_every_n_epochs": 1,
-    "log_every_n_batches": 50,
+    "log_every_n_batches": 20,
     "show_examples": false,
     "evaluation_targets": [
       "train",
       "valid"
     ],
-    "tensorboard_log_dir": "{MODEL_PATH}/logs",
     "class_name": "torch_trainer"
   },
   "metadata": {
@@ -170,8 +141,7 @@
       "ROOT_PATH": "~/.deeppavlov",
       "DOWNLOADS_PATH": "{ROOT_PATH}/downloads",
       "MODELS_PATH": "{ROOT_PATH}/models",
-      "MODEL_PATH": "{MODELS_PATH}/classifiers/multilabel_topics_abstract_only_v1"
-    },
-    "download": []
+      "MODEL_PATH": "{MODELS_PATH}/classifiers/multilabel_topics_v1"
+    }
   }
 }

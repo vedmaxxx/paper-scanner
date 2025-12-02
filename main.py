@@ -14,8 +14,8 @@ from deeppavlov import train_model
 from deeppavlov.core.commands.utils import parse_config
 
 config = parse_config('config.json')
-config['dataset_reader']['data_path'] = './dataset'
-
+# config['dataset_reader']['data_path'] = './dataset'
+config['dataset_reader']['data_path'] = './dataset/formatted/'
 model = train_model(config)
 
 # НУЖНО ПОМЕНЯТЬ ПУТЬ К КОНФИГУ ДАТАСЕТА
