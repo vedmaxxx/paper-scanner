@@ -61,7 +61,7 @@ def train_with_gpu(config_path, data_path):
     return train_model(config)
 
 
-dataset_preprocessing()
+# dataset_preprocessing()
 
 # Использование
-# model = train_with_gpu('config.json', './dataset/formatted/')
+model = train_with_gpu("config.json", "./dataset/")

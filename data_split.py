@@ -2,7 +2,6 @@ import pandas as pd
 import os
 from sklearn.model_selection import train_test_split
 
-INPUT_FILE = "./dataset/formatted/formatted_source.csv"
 OUTPUT_DIR = "./dataset/"
 
 

@@ -4,7 +4,7 @@
     "class_sep": ",",
     "x": "text",
     "y": "label",
-    "data_path": "./dataset/arxiv/",
+    "data_path": "./dataset/",
     "train": "train.csv",
     "valid": "valid.csv"
   },
@@ -31,7 +31,6 @@
         "class_name": "simple_vocab",
         "fit_on": ["y"],
         "save_path": "{MODEL_PATH}/classes.dict",
-        "load_path": "{MODEL_PATH}/classes.dict",
         "in": ["y"],
         "out": ["y_ids"]
       },
@@ -49,7 +48,6 @@
         "return_probas": true,
         "pretrained_bert": "{TRANSFORMER}",
         "save_path": "{MODEL_PATH}/model",
-        "load_path": "{MODEL_PATH}/model",
         "multilabel": true,
         "optimizer": "AdamW",
         "optimizer_parameters": {
@@ -83,15 +81,11 @@
     "out": ["y_pred_labels"]
   },
   "train": {
-    "epochs": 4,
+    "epochs": 1,
     "batch_size": 32,
     "metrics": [
       {
         "name": "f1_macro",
-        "inputs": ["y_onehot", "y_pred_onehot"]
-      },
-      {
-        "name": "f1_weighted",
         "inputs": ["y_onehot", "y_pred_onehot"]
       },
       {

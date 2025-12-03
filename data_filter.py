@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+OUTPUT_DIR = "./dataset/filtered/"
+
 
 # Функция для извлечения меток из строки
 def extract_labels(label_string):
@@ -9,10 +11,6 @@ def extract_labels(label_string):
         for lbl in str(label_string).split(",")
     ]
     return labels
-
-
-# Чтение данных
-# df_dataset = pd.read_csv("./dataset/arxiv/train.csv")
 
 
 def filter_dataset(df_dataset):
@@ -59,8 +57,7 @@ def filter_dataset(df_dataset):
     df_filtered = pd.DataFrame(filtered_rows).reset_index(drop=True)
 
     # Сохраняем отфильтрованный датасет
-    output_path = "./filtered/source_filtered.csv"
-    df_filtered.to_csv(output_path, index=False)
+    df_filtered.to_csv(f"{OUTPUT_DIR}/filtered_source.csv", index=False)
 
     print(f"\n=== РЕЗУЛЬТАТЫ ФИЛЬТРАЦИИ ===")
     print(f"Размер исходного датасета: {len(df_dataset)} строк")
@@ -104,7 +101,7 @@ def filter_dataset(df_dataset):
                 f"⚠ Внимание: {rare_in_filtered} классов имеют ≤{MIN_SAMPLES} примеров"
             )
 
-    print(f"\nОтфильтрованный датасет сохранен в: {output_path}")
+    print(f"\nОтфильтрованный датасет сохранен в: {OUTPUT_DIR}")
     print()
 
     return df_filtered
