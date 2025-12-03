@@ -4,9 +4,9 @@ from sklearn.model_selection import train_test_split
 
 # Укажите путь к вашему файлу
 INPUT_FILE = (
-    "./dataset/arxiv/train_balanced_source.csv"  # измените на путь к вашему файлу
+    "./dataset/arxiv/source/raw_source_dataset.csv"  # измените на путь к вашему файлу
 )
-OUTPUT_DIR = "dataset/arxiv"
+OUTPUT_DIR = "./formatted_dataset"
 
 # Создаем папку
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -39,7 +39,7 @@ df = df[df["label"] != ""]
 df = df[["text", "label"]]
 
 # Сохраняем исходный обработанный файл
-df.to_csv(f"{OUTPUT_DIR}/source_processed_dataset.csv", index=False)
+df.to_csv(f"{OUTPUT_DIR}/formatted_source_dataset.csv", index=False)
 
 
 # Разделяем
@@ -47,11 +47,12 @@ train_df, temp_df = train_test_split(df, test_size=0.2, random_state=42)
 valid_df, test_df = train_test_split(temp_df, test_size=0.5, random_state=42)
 
 # Сохраняем
-train_df.to_csv(f"{OUTPUT_DIR}/train-balanced.csv", index=False)
-valid_df.to_csv(f"{OUTPUT_DIR}/valid-balanced.csv", index=False)
-test_df.to_csv(f"{OUTPUT_DIR}/test-balanced.csv", index=False)
+train_df.to_csv(f"{OUTPUT_DIR}/train.csv", index=False)
+valid_df.to_csv(f"{OUTPUT_DIR}/valid.csv", index=False)
+test_df.to_csv(f"{OUTPUT_DIR}/test.csv", index=False)
 
 print(f"Готово! Файлы в папке '{OUTPUT_DIR}':")
+print(f"  formatted_source_dataset.csv: {len(df)} записей")
 print(f"  train.csv: {len(train_df)} записей")
 print(f"  valid.csv: {len(valid_df)} записей")
 print(f"  test.csv:  {len(test_df)} записей")
