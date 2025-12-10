@@ -6,3 +6,9 @@
 
 
 Датасет: https://www.kaggle.com/datasets/shivanandmn/multilabel-classification-dataset?resource=download&select=train.csv
+
+
+
+# Update
+Перешли к задаче выделения ключевых слов из текста, т.к. классификация не подходит под нашу задачу
+В связи с этим используется модель deeppavlov bert_embedder для извлечения эмбеддинга входного текста и кандидатов
