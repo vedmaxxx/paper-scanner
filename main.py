@@ -21,9 +21,10 @@ class DocumentApp:
         self.root = root
         self.root.title("Система управления научными документами")
         self.root.geometry("900x750")
-
+        from deeppavlov import build_model, configs
+        model = build_model(configs.embedder.bert_embedder)
         # Инициализация БД и процессора документов
-        self.db = DocumentDB()  # Главное соединение для GUI
+        self.db = DocumentDB(model=model)  # Главное соединение для GUI
         self.processor = DocumentProcessor()
         self.file_reader = FileReader()
 
@@ -358,8 +359,10 @@ class DocumentApp:
         try:
             self.root.after(0, lambda: self.show_loading(True))
 
+            from deeppavlov import build_model, configs
+            model = build_model(configs.embedder.bert_embedder)
             # Создаем отдельное соединение с БД для этого потока
-            thread_db = DocumentDB()  # Новое соединение в этом потоке
+            thread_db = DocumentDB(model=model)  # Новое соединение в этом потоке
 
             # Обработка документа и добавление в БД
             result = self.processor.add_paper_to_system(thread_db, file_path)
@@ -426,8 +429,10 @@ class DocumentApp:
         try:
             self.root.after(0, lambda: self.show_loading(True))
 
+            from deeppavlov import build_model, configs
+            model = build_model(configs.embedder.bert_embedder)
             # Создаем отдельное соединение с БД для этого потока
-            thread_db = DocumentDB()  # Новое соединение в этом потоке
+            thread_db = DocumentDB(model=model)  # Новое соединение в этом потоке
 
             # Поиск релевантных документов с порогом 60%
             relevant_papers = self.processor.get_relevant_papers(

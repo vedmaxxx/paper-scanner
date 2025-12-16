@@ -138,7 +138,7 @@ class DocumentProcessor:
             }
     
     def get_relevant_papers(self, db, file_path: str, 
-                          similarity_threshold: float = 0.3,
+                          similarity_threshold: float = 0.6,
                           max_results: int = 10) -> List[Tuple[str, float]]:
         """
         Поиск релевантных документов в БД
