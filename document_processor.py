@@ -53,7 +53,7 @@ class DocumentProcessor:
             raise Exception(f"Ошибка чтения файла: {str(e)}")
     
     def extract_keywords_from_document(self, file_path: str, 
-                                     max_keywords: int = 15) -> List[str]:
+                                     max_keywords: int = 30) -> List[str]:
         """
         Извлечение ключевых слов из документа
         
@@ -64,62 +64,22 @@ class DocumentProcessor:
         Returns:
             список ключевых слов
         """
-        try:
-            # Сначала читаем файл
-            text = self.read_text_file(file_path)
-            
-            # Если текст слишком короткий, добавляем больше ключевых слов
-            if len(text) < 500:
-                max_keywords = 10
-            
-            # Извлекаем ключевые слова с помощью KeywordExtractor
-            keywords_with_scores = self.keyword_extractor.extract_keywords_from_text(
-                text,
-                use_bigrams=True,
-                similarity_threshold=0.4,
-                max_keywords=max_keywords
-            )
-            
-            # Возвращаем только ключевые слова (без оценок)
-            return [keyword for keyword, _ in keywords_with_scores]
-            
-        except Exception as e:
-            print(f"Ошибка извлечения ключевых слов через BERT: {e}")
-            # Резервный вариант: упрощенное извлечение ключевых слов
-            return self._extract_simple_keywords(file_path)
-    
-    def _extract_simple_keywords(self, file_path: str) -> List[str]:
-        """
-        Упрощенное извлечение ключевых слов (резервный метод)
         
-        Args:
-            file_path: путь к файлу
-            
-        Returns:
-            список ключевых слов
-        """
-        try:
-            text = self.read_text_file(file_path)
-            words = self.keyword_extractor.preprocess_text(text)
-            
-            # Частотный анализ
-            from collections import Counter
-            freq = Counter(words)
-            
-            # Извлекаем наиболее частые существительные
-            keywords = []
-            for word, count in freq.most_common(20):
-                if count >= 2 and len(word) > 3:
-                    pos = self.keyword_extractor.morph.parse(word)[0].tag.POS
-                    if pos == "NOUN":  # Только существительные
-                        keywords.append(word)
-            
-            return keywords[:10]
-            
-        except Exception as e:
-            print(f"Ошибка упрощенного извлечения ключевых слов: {e}")
-            return []
-    
+        # Сначала читаем файл
+        text = self.read_text_file(file_path)
+        
+        # Если текст слишком короткий, добавляем меньше ключевых слов
+        if len(text) < 500:
+            max_keywords = 15
+        
+        # Извлекаем ключевые слова с помощью KeywordExtractor
+        keywords_with_scores = self.keyword_extractor.extract_keywords_from_text(text,False,max_keywords=max_keywords)
+        print("Ключевые слова с оценками:\n")
+        print(keywords_with_scores)
+        print("\n\n")
+        # Возвращаем только ключевые слова (без оценок)
+        return [keyword for keyword, _ in keywords_with_scores]
+
     def process_document(self, file_path: str) -> Tuple[str, List[str]]:
         """
         Полная обработка документа
@@ -178,7 +138,7 @@ class DocumentProcessor:
             }
     
     def get_relevant_papers(self, db, file_path: str, 
-                          similarity_threshold: float = 0.6,
+                          similarity_threshold: float = 0.3,
                           max_results: int = 10) -> List[Tuple[str, float]]:
         """
         Поиск релевантных документов в БД

@@ -60,19 +60,6 @@ class KeywordExtractor:
                 )
         return self.model
     
-    def read_text_file(self, filepath: str) -> str:
-        """
-        Чтение текста из файла
-        
-        Args:
-            filepath: путь к файлу
-            
-        Returns:
-            текст из файла
-        """
-        with open(filepath, "r", encoding="utf-8") as f:
-            return f.read()
-    
     def normalize_word(self, word: str) -> str:
         """
         Нормализация слова с использованием pymorphy2
@@ -83,6 +70,11 @@ class KeywordExtractor:
         Returns:
             нормализованная форма слова
         """
+        if word.startswith('-'):
+            word = word.lstrip('-')
+            # Если после удаления дефисов слово стало пустым, возвращаем исходное
+            if not word:
+                word = '-'
         parsed = self.morph.parse(word)[0]
         return parsed.normal_form
     
@@ -109,37 +101,10 @@ class KeywordExtractor:
                     words.append(norm_word)
         
         return words
-    
-    def extract_single_word_candidates(self, words: List[str], 
-                                      min_frequency: int = 2) -> List[str]:
-        """
-        Извлечение кандидатов (одиночных слов) на основе частотного анализа
-        
-        Args:
-            words: список предобработанных слов
-            min_frequency: минимальная частота для кандидата
-            
-        Returns:
-            список кандидатов (одиночных слов)
-        """
-        # Частотный анализ
-        freq = Counter(words)
-        
-        # Фильтрация по части речи и частоте
-        candidates = []
-        for word, count in freq.items():
-            if count >= min_frequency and len(word) > 3:
-                pos = self.morph.parse(word)[0].tag.POS
-                if pos in ["NOUN", "ADJF", "ADJS", "VERB"]:
-                    candidates.append(word)
-        
-        # Сортировка по частоте
-        candidates.sort(key=lambda x: freq[x], reverse=True)
-        return candidates[:100]
-    
-    def extract_candidates_with_bigrams(self, words: List[str], 
-                                       min_frequency: int = 2,
-                                       include_bigrams: bool = True) -> List[str]:
+
+    def extract_candidates(self, words: List[str], 
+                                       include_bigrams:bool, 
+                                       min_frequency: int) -> List[str]:
         """
         Извлечение кандидатов с учетом биграмм
         
@@ -159,7 +124,7 @@ class KeywordExtractor:
         for word, count in freq.items():
             if count >= min_frequency and len(word) > 3:
                 pos = self.morph.parse(word)[0].tag.POS
-                if pos in ["NOUN", "ADJF", "ADJS", "VERB"]:
+                if pos in ["NOUN"]:#, "ADJF", "ADJS", "VERB"
                     candidates.append(word)
         
         # Добавление биграмм
@@ -188,8 +153,8 @@ class KeywordExtractor:
         candidates.sort(key=lambda x: all_freq.get(x, 0), reverse=True)
         return candidates[:120]
     
-    def get_text_embedding_simple(self, text: str, chunk_size: int = 400, 
-                                 overlap: int = 50) -> Optional[np.ndarray]:
+    def get_text_embedding(self, text: str, chunk_size: int, 
+                                 overlap: int) -> Optional[np.ndarray]:
         """
         Получение эмбеддинга текста с чанкованием
         
@@ -223,9 +188,7 @@ class KeywordExtractor:
             chunk = " ".join(chunk_words)
             chunks.append(chunk)
         
-        # Ограничиваем количество чанков
-        chunks = chunks[:20]
-        
+
         # Получаем эмбеддинги для каждого чанка
         embeddings = []
         for chunk in chunks:
@@ -244,7 +207,7 @@ class KeywordExtractor:
         return np.mean(np.vstack(embeddings), axis=0, keepdims=True)
     
     def get_candidate_embeddings(self, candidates: List[str], 
-                                limit: int = 50) -> Tuple[List[str], List[np.ndarray]]:
+                                limit: int) -> Tuple[List[str], List[np.ndarray]]:
         """
         Получение эмбеддингов для кандидатов
         
@@ -290,20 +253,8 @@ class KeywordExtractor:
     
     def filter_and_rank_keywords(self, candidates: List[str], 
                                 similarities: np.ndarray,
-                                similarity_threshold: float = 0.4,
-                                max_keywords: int = 20) -> List[Tuple[str, float]]:
-        """
-        Фильтрация и ранжирование ключевых слов
-        
-        Args:
-            candidates: список кандидатов
-            similarities: массив значений сходства
-            similarity_threshold: порог сходства
-            max_keywords: максимальное количество ключевых слов
-            
-        Returns:
-            список кортежей (ключевое слово, сходство)
-        """
+                                similarity_threshold: float,
+                                max_keywords: int) -> List[Tuple[str, float]]:
         # Сортировка по сходству
         results = sorted(zip(candidates, similarities), 
                         key=lambda x: x[1], reverse=True)
@@ -325,29 +276,14 @@ class KeywordExtractor:
     def extract_keywords_from_text(self, text: str, 
                                   use_bigrams: bool = True,
                                   similarity_threshold: float = 0.4,
-                                  max_keywords: int = 20) -> List[Tuple[str, float]]:
-        """
-        Основной метод извлечения ключевых слов из текста
-        
-        Args:
-            text: исходный текст
-            use_bigrams: использовать ли биграммы
-            similarity_threshold: порог сходства для фильтрации
-            max_keywords: максимальное количество ключевых слов
-            
-        Returns:
-            список кортежей (ключевое слово, сходство)
-        """
+                                  max_keywords: int = 40) -> List[Tuple[str, float]]:
         print("Обработка текста...")
         
         # Предобработка текста
         words = self.preprocess_text(text)
         
         # Извлечение кандидатов
-        if use_bigrams:
-            candidates = self.extract_candidates_with_bigrams(words)
-        else:
-            candidates = self.extract_single_word_candidates(words)
+        candidates = self.extract_candidates(words, use_bigrams, 2)
         
         print(f"Найдено кандидатов: {len(candidates)}")
         
@@ -355,13 +291,13 @@ class KeywordExtractor:
             return []
         
         # Получаем эмбеддинг текста
-        text_embedding = self.get_text_embedding_simple(text)
+        text_embedding = self.get_text_embedding(text,100,20)
         if text_embedding is None:
             print("Не удалось получить эмбеддинг текста")
             return []
         
         # Получаем эмбеддинги кандидатов
-        valid_candidates, candidate_embeddings = self.get_candidate_embeddings(candidates)
+        valid_candidates, candidate_embeddings = self.get_candidate_embeddings(candidates,120)
         
         if not candidate_embeddings:
             print("Не удалось получить эмбеддинги кандидатов")
@@ -376,75 +312,3 @@ class KeywordExtractor:
         )
         
         return keywords
-    
-    def extract_keywords_from_file(self, filepath: str, **kwargs) -> List[Tuple[str, float]]:
-        """
-        Извлечение ключевых слов из файла
-        
-        Args:
-            filepath: путь к файлу
-            **kwargs: дополнительные аргументы для extract_keywords_from_text
-            
-        Returns:
-            список кортежей (ключевое слово, сходство)
-        """
-        # Чтение текста из файла
-        text = self.read_text_file(filepath)
-        print(f"Текст: {len(text)} символов, {len(text.split())} слов")
-        
-        # Извлечение ключевых слов
-        return self.extract_keywords_from_text(text, **kwargs)
-    
-    def save_keywords_to_file(self, keywords: List[Tuple[str, float]], 
-                             output_file: str = "keywords_output.txt"):
-        """
-        Сохранение ключевых слов в файл
-        
-        Args:
-            keywords: список ключевых слов с оценками
-            output_file: путь к выходному файлу
-        """
-        with open(output_file, "w", encoding="utf-8") as f:
-            f.write("Ключевые слова:\n")
-            for i, (word, score) in enumerate(keywords, 1):
-                f.write(f"{i:2}. {word:25} : {score:.4f}\n")
-        
-        print(f"Ключевые слова сохранены в файл: {output_file}")
-
-
-# Функция для обратной совместимости
-def extract_keywords_from_file(filepath: str, **kwargs) -> List[Tuple[str, float]]:
-    """
-    Функция для обратной совместимости с предыдущим кодом
-    
-    Args:
-        filepath: путь к файлу
-        **kwargs: дополнительные аргументы
-        
-    Returns:
-        список ключевых слов с оценками
-    """
-    extractor = KeywordExtractor()
-    return extractor.extract_keywords_from_file(filepath, **kwargs)
-
-
-# Пример использования
-if __name__ == "__main__":
-    # Создание экстрактора
-    extractor = KeywordExtractor()
-    
-    # Извлечение ключевых слов из файла
-    keywords = extractor.extract_keywords_from_file(
-        "./dataset/keywords_text.txt",
-        use_bigrams=True,
-        similarity_threshold=0.4,
-        max_keywords=20
-    )
-    
-    # Вывод результатов
-    print(f"\nТоп-{len(keywords)} ключевых слов:")
-    for i, (word, score) in enumerate(keywords, 1):
-        print(f"{i:2}. {word:20} : {score:.4f}")
-    
-    # Сохранение в файл
-    extractor.save_keywords_to_file(keywords, "./dataset/keywords_output.txt")

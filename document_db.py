@@ -107,11 +107,14 @@ class DocumentDB:
         
         results = []
         query_set = set(query_keywords)
-        
+        print("Поиск совпадений по БД ...")
+        print("Ключевые слова входного документа:")
+        print(query_set)
+        print("Ключевые слова с Базы данных:")
         for row in rows:
             doc_keywords = json.loads(row[1])
             doc_set = set(doc_keywords)
-            
+            print(doc_set)
             # Рассчитываем коэффициент Жаккара
             if query_set and doc_set:
                 intersection = len(query_set.intersection(doc_set))
@@ -119,7 +122,7 @@ class DocumentDB:
                 similarity = intersection / union if union > 0 else 0
             else:
                 similarity = 0
-            
+            print(f"Совпадение: {similarity*100:.3f}%\n")
             if similarity >= threshold:
                 results.append({
                     'id': row[0],
@@ -290,55 +293,3 @@ class DocumentDB:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-
-
-# Пример использования
-if __name__ == "__main__":
-    # Создаем и заполняем базу данных примерами
-    with DocumentDB() as db:
-        # Добавляем несколько документов
-        documents = [
-            (["python", "программирование", "алгоритмы"], "Введение в Python"),
-            (["базы данных", "sql", "postgresql"], "Основы SQL"),
-            (["машинное обучение", "python", "нейронные сети"], "ML для начинающих"),
-            (["алгоритмы", "структуры данных", "python"], "Алгоритмы и структуры данных"),
-            (["веб-разработка", "javascript", "html", "css"], "Frontend разработка"),
-        ]
-        
-        for keywords, label in documents:
-            db.add_document(keywords, label)
-        
-        print("Все документы в базе:")
-        for doc in db.get_all_documents():
-            print(f"ID: {doc['id']}, Название: {doc['label']}, Ключевые слова: {doc['keywords']}")
-        
-        print("\n" + "="*50 + "\n")
-        
-        # Поиск по точному совпадению ключевого слова
-        print("Поиск документов с ключевым словом 'python':")
-        for doc in db.search_by_keyword("python"):
-            print(f"  - {doc['label']}")
-        
-        print("\n" + "="*50 + "\n")
-        
-        # Поиск по похожим ключевым словам
-        print("Поиск по похожим ключевым словам ['python', 'алгоритмы']:")
-        similar_docs = db.search_by_similar_keywords(["python", "алгоритмы"], threshold=0.2)
-        for doc in similar_docs:
-            print(f"  - {doc['label']} (сходство: {doc['similarity']})")
-        
-        print("\n" + "="*50 + "\n")
-        
-        # Поиск документов с хотя бы одним совпадением
-        print("Поиск документов с хотя бы одним из ['sql', 'базы данных']:")
-        fuzzy_docs = db.search_by_fuzzy_keywords(["sql", "базы данных"], min_matches=1)
-        for doc in fuzzy_docs:
-            print(f"  - {doc['label']} (совпадений: {doc['matches']})")
-        
-        print("\n" + "="*50 + "\n")
-        
-        # Получение статистики по ключевым словам
-        print("Статистика по ключевым словам:")
-        stats = db.get_keyword_statistics()
-        for keyword, count in list(stats.items())[:10]:  # Показываем топ-10
-            print(f"  - {keyword}: {count}")
