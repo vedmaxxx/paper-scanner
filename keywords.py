@@ -157,12 +157,10 @@ class KeywordExtractor:
                                  overlap: int) -> Optional[np.ndarray]:
         """
         Получение эмбеддинга текста с чанкованием
-        
         Args:
             text: исходный текст
             chunk_size: размер чанка в словах
             overlap: перекрытие между чанками
-            
         Returns:
             эмбеддинг текста или None в случае ошибки
         """

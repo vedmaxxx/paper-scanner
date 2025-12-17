@@ -14,7 +14,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from document_db import DocumentDB
 from document_processor import DocumentProcessor
 from file_reader import FileReader
-
+SIM_TRESHHOLD = 0.5
+MAX_DOCS_COUNT = 10
 
 class DocumentApp:
     def __init__(self, root):
@@ -434,9 +435,9 @@ class DocumentApp:
             # Создаем отдельное соединение с БД для этого потока
             thread_db = DocumentDB(model=model)  # Новое соединение в этом потоке
 
-            # Поиск релевантных документов с порогом 60%
+            # Поиск релевантных документов с порогом SIM_TRESHHOLD %
             relevant_papers = self.processor.get_relevant_papers(
-                thread_db, file_path, similarity_threshold=0.6, max_results=10
+                thread_db, file_path, similarity_threshold= SIM_TRESHHOLD, max_results = MAX_DOCS_COUNT
             )
 
             # Закрываем соединение в этом потоке
@@ -448,7 +449,7 @@ class DocumentApp:
                 for label, similarity in relevant_papers:
                     # Форматируем сходство в процентах
                     similarity_percent = similarity * 100
-                    if similarity_percent >= 60:
+                    if similarity_percent >= SIM_TRESHHOLD:
                         formatted_results.append(
                             f"{label} (сходство: {similarity_percent:.1f}%)"
                         )
@@ -462,7 +463,7 @@ class DocumentApp:
                         "🔍 Результаты поиска",
                         "К сожалению, релевантные документы не найдены.\n\n"
                         "Возможные причины:\n"
-                        "• Сходство меньше 60%\n"
+                        f"• Сходство меньше {SIM_TRESHHOLD * 100}%\n"
                         "• В базе данных недостаточно документов\n"
                         "• Ключевые слова документа уникальны\n\n"
                         "Попробуйте:\n"
@@ -506,7 +507,7 @@ class DocumentApp:
         # Подзаголовок
         ttk.Label(
             results_window,
-            text=f"Найдено документов: {len(results)} (сходство ≥60%)",
+            text=f"Найдено документов: {len(results)} (сходство ≥{SIM_TRESHHOLD*100}%)",
             font=("Arial", 10),
         ).pack(pady=(0, 15))
 

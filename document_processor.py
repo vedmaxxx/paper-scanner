@@ -4,6 +4,8 @@ from typing import List, Tuple, Optional
 from keywords import KeywordExtractor
 from file_reader import FileReader
 
+USE_BIGRAMS = False
+SIMIL_THRESHOLD = 0.475
 
 class DocumentProcessor:
     """Класс для обработки документов и извлечения ключевых слов"""
@@ -53,7 +55,7 @@ class DocumentProcessor:
             raise Exception(f"Ошибка чтения файла: {str(e)}")
     
     def extract_keywords_from_document(self, file_path: str, 
-                                     max_keywords: int = 30) -> List[str]:
+                                     max_keywords: int = 45) -> List[str]:
         """
         Извлечение ключевых слов из документа
         
@@ -71,12 +73,13 @@ class DocumentProcessor:
         # Если текст слишком короткий, добавляем меньше ключевых слов
         if len(text) < 500:
             max_keywords = 15
-        
+        if len(text) > 50000:
+            max_keywords = 65
         # Извлекаем ключевые слова с помощью KeywordExtractor
-        keywords_with_scores = self.keyword_extractor.extract_keywords_from_text(text,False,max_keywords=max_keywords)
+        keywords_with_scores = self.keyword_extractor.extract_keywords_from_text(text, USE_BIGRAMS , SIMIL_THRESHOLD,max_keywords)
         print("Ключевые слова с оценками:\n")
         print(keywords_with_scores)
-        print("\n\n")
+        print("\n")
         # Возвращаем только ключевые слова (без оценок)
         return [keyword for keyword, _ in keywords_with_scores]
 
